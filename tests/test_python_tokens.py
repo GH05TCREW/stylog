@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import sys
 
 from stylog.analysis.identifiers import classify_style, split_components
 from stylog.analysis.python import PythonTokensAnalyzer
@@ -245,11 +246,22 @@ def test_string_quote_and_prefix():
 
 def test_tstring_and_fstring_fragments():
     out = by_id(run_tokens('t"Hi {x}"\nf"{y}"\n'))
-    assert cat(out["code.python.lexical.token_class"]) == {
-        "identifier": 2,
-        "operator": 4,
-        "string_fragment": 5,
-    }
+    if sys.version_info >= (3, 14):
+        expected = {
+            "identifier": 2,
+            "operator": 4,
+            "string_fragment": 5,
+        }
+    else:
+        # cpython.tokenize before 3.14 has no TSTRING_* tokens: t"Hi {x}"
+        # lexes as NAME 't' followed by a plain STRING.
+        expected = {
+            "identifier": 2,
+            "operator": 2,
+            "string": 1,
+            "string_fragment": 2,
+        }
+    assert cat(out["code.python.lexical.token_class"]) == expected
 
 
 def test_soft_keywords():
