@@ -1,0 +1,49 @@
+# --- Byte-compiled / cache ---
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.pyre/
+.pytype/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+
+# --- Build / packaging ---
+build/
+dist/
+*.egg-info/
+*.egg
+wheels/
+
+# --- Virtual environments ---
+.venv/
+venv/
+env/
+ENV/
+.smoke-venv/
+wheel_proof/
+
+# --- Local tooling / OS ---
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+*.log
+
+# --- Secrets ---
+.env
+.env.*
+*.pem
+*.key
+
+# --- Project-specific: local research data ---
+validation/
+datasets/

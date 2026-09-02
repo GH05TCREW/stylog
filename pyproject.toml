@@ -1,0 +1,102 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "stylog"
+version = "0.1.0"
+description = "Local-first scientific stylometry: deterministic measurement for text and source code"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Stylog contributors" }]
+keywords = [
+    "stylometry",
+    "authorship-attribution",
+    "authorship-verification",
+    "forensics",
+    "deterministic",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Text Processing :: Linguistic",
+]
+requires-python = ">=3.12,<3.15"
+dependencies = [
+    "pydantic>=2.13,<3",
+    "typer>=0.27,<0.28",
+    "rfc8785==0.1.4",
+    "platformdirs>=4.11,<5",
+    "numpy>=2.5,<3",
+    "tree-sitter>=0.26,<0.27",
+    "tree-sitter-javascript>=0.25,<0.26",
+    "tree-sitter-typescript>=0.23.2,<0.24",
+    "tree-sitter-c>=0.24,<0.25",
+    "tree-sitter-rust>=0.24,<0.25",
+]
+
+[project.optional-dependencies]
+# click is pulled in explicitly: spacy 3.8.x imports it but does not declare
+# it, and typer >=0.27 no longer depends on it (clean-install import failure).
+nlp = ["spacy>=3.8,<4", "click>=8,<9"]
+ml = ["scikit-learn>=1.9,<2"]
+data = [
+    "pyarrow>=25,<26",
+    "polars>=1,<2",
+    "duckdb>=1,<2",
+    "pandas>=3,<4",
+]
+all = [
+    "spacy>=3.8,<4",
+    "click>=8,<9",
+    "scikit-learn>=1.9,<2",
+    "pyarrow>=25,<26",
+    "polars>=1,<2",
+    "duckdb>=1,<2",
+    "pandas>=3,<4",
+]
+dev = [
+    "pytest>=9",
+    "scipy",
+    "ruff",
+    "build",
+]
+
+[project.scripts]
+stylog = "stylog.cli:app"
+
+[project.urls]
+Homepage = "https://github.com/GH05TCREW/stylog"
+Repository = "https://github.com/GH05TCREW/stylog"
+Issues = "https://github.com/GH05TCREW/stylog/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/stylog"]
+
+[tool.hatch.build.targets.sdist]
+include = ["/src/stylog", "/docs", "/schemas", "/README.md", "/pyproject.toml", "/LICENSE"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+# BLE001: deliberate broad catches at analyzer-atomicity/cache/CLI boundaries.
+# UP047/PLW1510/SIM101/TRY004: style-only for this codebase.
+ignore = ["UP047", "PLW1510", "SIM101", "TRY004", "BLE001"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/stylog/__init__.py" = ["F401"]
+"src/stylog/domain/__init__.py" = ["F401"]

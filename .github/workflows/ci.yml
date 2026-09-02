@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        python: ["3.12", "3.13", "3.14"]
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install (base)
+        run: pip install -e . pytest
+      - name: Lint
+        run: pip install ruff && python -m ruff check src tests
+      - name: Schema drift gate
+        run: python tools/generate_schemas.py --check
+      - name: Grammar manifest gate
+        run: python -m pytest tests/test_grammar_manifest.py -q
+      - name: Core suite (offline-safe subset)
+        run: python -m pytest -q --ignore=tests/test_data.py --ignore=tests/test_representations.py --ignore=tests/test_linguistic.py
+
+  extras:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - name: Install (all)
+        run: pip install -e ".[all]" pytest
+      - name: Full suite
+        run: python -m pytest -q
+        # NLP tests skip cleanly when no local spaCy model is provisioned;
+        # CI must never download models or datasets.
+
+  packaging:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - name: Build wheel/sdist
+        run: pip install build && python -m build
+      - name: Clean install from wheel (base) and smoke all five languages
+        run: |
+          pip install --force-reinstall --no-deps dist/*.whl
+          pip install "pydantic>=2.13,<3" "typer>=0.27,<0.28" "rfc8785==0.1.4" "platformdirs>=4.11,<5" "numpy>=2.5,<3" "tree-sitter>=0.26,<0.27" tree-sitter-javascript tree-sitter-typescript tree-sitter-c tree-sitter-rust
+          python -c "
+          import stylog
+          assert any(f.status == 'ok' for f in stylog.fingerprint_text('hello world.').features)
+          for lang, src in [('python', b'x = 1\n'), ('javascript', b'const x = 1;\n'), ('typescript', b'const x: number = 1;\n'), ('c', b'int main(void){return 0;}\n'), ('rust', b'fn main() { let x = 1; }\n')]:
+              fp = stylog.fingerprint_bytes(src, kind='code', language=lang)
+              assert any(f.feature_id.startswith('code.parser') or f.feature_id.startswith('code.python') for f in fp.features if f.status == 'ok'), lang
+          print('clean-install smoke OK')
+          "
