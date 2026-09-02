@@ -1,0 +1,4 @@
+# Committed canonical artifacts (schemas/*.schema.json, grammar_manifest.json)
+# are byte-compared/hash-gated in CI as canonical JCS + one LF; checkouts must
+# never convert line endings.
+* text=auto eol=lf
